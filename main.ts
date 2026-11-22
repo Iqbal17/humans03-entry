@@ -5,7 +5,7 @@
 // into the output dir, byte for byte. The output dir is created when missing
 // and never removed. On success the program prints nothing.
 
-import { copyFileSync, mkdirSync } from 'node:fs';
+import { copyFileSync, mkdirSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 
 const botDir = process.env.MAKEFUN_BOT_DIR ?? '.';
@@ -13,3 +13,11 @@ const outputDir = process.env.MAKEFUN_OUTPUT_DIR ?? '/output';
 
 mkdirSync(outputDir, { recursive: true });
 copyFileSync(join(botDir, 'VIDEO.json'), join(outputDir, 'VIDEO.json'));
+
+// Read the copy back and check it against the source byte for byte; a
+// truncated or corrupted hand-off must fail loudly, never pass silently.
+const sourceBytes = readFileSync(join(botDir, 'VIDEO.json'));
+const copiedBytes = readFileSync(join(outputDir, 'VIDEO.json'));
+if (!sourceBytes.equals(copiedBytes)) {
+  throw new Error('copied VIDEO.json differs from the source');
+}
